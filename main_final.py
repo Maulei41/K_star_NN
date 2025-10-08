@@ -227,15 +227,6 @@ def main():
             'delimiter': r'\s+',
             'is_arff': False,
             'target_col': -1
-        },
-        'PopFailures': {
-            'name': 'PopFailures',
-            'loader': None,
-            'url': 'https://archive.ics.uci.edu/static/public/250/wearable+computing+classification+of+body+postures+and+movements+puc+rio.zip',
-            'has_header': False,
-            'delimiter': ',',
-            'is_arff': True,
-            'target_col': -1
         }
     }
 
