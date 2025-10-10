@@ -29,7 +29,7 @@ def cross_validation(model_class, X, y, param_range, cv_folds=5):
     """
     Perform cross-validation to find the best parameter
     """
-    kf = KFold(n_splits=cv_folds, shuffle=True, random_state=456)
+    kf = KFold(n_splits=cv_folds, shuffle=True, random_state=77)
     scores = {}
 
     for param in param_range:
