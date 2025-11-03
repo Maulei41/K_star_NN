@@ -6,7 +6,8 @@ class KStarNN:
     """
     k*-NN algorithm implementation based on the paper
     """
-    def __init__(self):
+    def __init__(self, L_C_ratio=1.0):
+        self.L_C_ratio = L_C_ratio  # Lipschitz constant to noise ratio
         self.k_values_used = []  # Track the range of k values used
     
     def fit(self, X_train, y_train):
@@ -26,14 +27,18 @@ class KStarNN:
             sorted_distances = distances[sorted_indices]
             sorted_labels = self.y_train[sorted_indices]
             
-            # Algorithm implementation
-            lambda_val, k = self._calculate_optimal_k(sorted_distances)
+            # Compute beta values as per paper: beta_i = L * d(x_i, x_0) / C
+            beta = self.L_C_ratio * sorted_distances
+            
+            # Algorithm implementation using beta values
+            lambda_val, k = self._calculate_optimal_k(beta)
             
             # Track the k value used for this prediction
             self.k_values_used.append(k)
             
-            # Calculate weights for the prediction
-            weights = self._calculate_weights(sorted_distances, lambda_val)
+            # Calculate weights for the prediction using sorted_distances for final calculation
+            # The lambda_val was calculated using scaled beta values, but weights are calculated accordingly
+            weights = self._calculate_weights(beta, lambda_val)
             
             # Weighted prediction
             pred = np.sum(weights * sorted_labels)
@@ -53,30 +58,57 @@ class KStarNN:
     def _calculate_optimal_k(self, beta):
         """
         Implements the algorithm from the paper:
-        - beta: vector of ordered distances
+        - beta: vector of ordered distances scaled by L/C
         """
         n = len(beta)
-        lambda_k = beta[0] + 1  # lambda_0 = beta_1 + 1 (using 0-indexing)
+        if n == 0:
+            return 0.0, 0
+        
+        # Start with k=0 and incrementally increase
+        lambda_k = beta[0] + 1  # Initial lambda guess
         k = 0
         
-        while k < n - 1 and lambda_k > beta[k + 1]:  # λ_k > β_{k+1}, and k ≤ n-1
-            k += 1
-            sum_beta = np.sum(beta[:k])
-            sum_beta_sq = np.sum(beta[:k]**2)
+        # Continue while condition is satisfied: lambda_k > beta[k+1] and k < n-1
+        while k < n - 1:
+            # Calculate lambda for k+1 neighbors
+            k_new = k + 1
+            sum_beta = np.sum(beta[:k_new])
+            sum_beta_sq = np.sum(beta[:k_new]**2)
             
-            # Calculate lambda_k using the formula
-            sqrt_term = k + sum_beta**2 - k * sum_beta_sq
-            if sqrt_term < 0:
-                # Handle numerical issues
-                sqrt_term = max(0, sqrt_term)  # Use max to handle small numerical errors
+            # Calculate discriminant for the quadratic equation
+            discriminant = k_new + sum_beta**2 - k_new * sum_beta_sq
             
-            # Avoid division by zero if k is 0 (though it shouldn't happen in the while loop)
-            if k > 0:
-                lambda_k = (1.0 / k) * (sum_beta + np.sqrt(max(0, sqrt_term)))
+            # Handle potential numerical issues
+            if discriminant < 0:
+                # The discriminant might be negative due to numerical precision issues
+                # If it's very close to 0, just set to 0, otherwise break
+                if discriminant < -1e-10:  # Significant negative value
+                    break
+                discriminant = 0.0
+            
+            # Calculate the new lambda value
+            sqrt_discriminant = np.sqrt(discriminant)
+            new_lambda = (sum_beta + sqrt_discriminant) / k_new
+            
+            # Check if this new lambda satisfies the algorithm's condition
+            # We need new_lambda > beta[k_new] to include the next neighbor
+            if new_lambda > beta[k_new]:
+                # Accept this k and lambda
+                k = k_new
+                lambda_k = new_lambda
+            else:
+                # Stop here - the condition is not satisfied
+                break
         
         # Ensure k is at least 1 if possible
         if k == 0 and n > 0:
             k = 1
+            # For k=1 case
+            sum_beta = beta[0]
+            sum_beta_sq = beta[0]**2
+            discriminant = 1 + sum_beta**2 - 1 * sum_beta_sq
+            discriminant = max(0, discriminant)
+            lambda_k = (sum_beta + np.sqrt(discriminant)) / 1
         
         return lambda_k, k
     

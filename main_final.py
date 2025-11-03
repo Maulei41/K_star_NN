@@ -25,11 +25,11 @@ def evaluate_model(model, X_train, y_train, X_test, y_test):
     return mae
 
 
-def cross_validation(model_class, X, y, param_range, cv_folds=5):
+def cross_validation(model_class, X, y, param_range, cv_folds=5, random_state=48):
     """
     Perform cross-validation to find the best parameter
     """
-    kf = KFold(n_splits=cv_folds, shuffle=True, random_state=77)
+    kf = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
     scores = {}
 
     for param in param_range:
@@ -42,6 +42,8 @@ def cross_validation(model_class, X, y, param_range, cv_folds=5):
                 model = model_class(k=param)
             elif model_class.__name__ == 'NWerror':
                 model = model_class(sigma=param)
+            elif model_class.__name__ == 'KStarNN':
+                model = model_class(L_C_ratio=param)
             else:
                 model = model_class()
 
@@ -232,6 +234,9 @@ def main():
 
     k_values = list(range(1, 11))
     sigma_values = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]
+    # L/C ratio values: including the original paper values plus some additional values around optimal ranges
+    lc_ratio_values = [0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
+                       1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 7.0, 10.0, 15.0, 20.0]
 
     results = []
 
@@ -279,11 +284,14 @@ def main():
             )
 
             print("  Finding best parameters via 5-fold cross-validation on validation set...")
-            best_k, _ = cross_validation(KNN, X_val, y_val, k_values)
+            best_k, _ = cross_validation(KNN, X_val, y_val, k_values, random_state=57)
             print(f"  Best k for k-NN: {best_k}")
 
-            best_sigma, _ = cross_validation(NWerror, X_val, y_val, sigma_values)
+            best_sigma, _ = cross_validation(NWerror, X_val, y_val, sigma_values, random_state=48)
             print(f"  Best sigma for NWerror: {best_sigma}")
+
+            best_lc_ratio, _ = cross_validation(KStarNN, X_val, y_val, lc_ratio_values, random_state=48)
+            print(f"  Best L/C ratio for k*-NN: {best_lc_ratio}")
 
             print("  Evaluating models on test set...")
             knn_model = KNN(k=best_k)
@@ -292,7 +300,7 @@ def main():
             nw_model = NWerror(sigma=best_sigma)
             nw_error = evaluate_model(nw_model, X_val, y_val, X_test, y_test)
 
-            kstar_model = KStarNN()
+            kstar_model = KStarNN(L_C_ratio=best_lc_ratio)
             kstar_model.fit(X_val, y_val)
             kstar_pred = kstar_model.predict(X_test)
             kstar_error = np.mean(np.abs(y_test - kstar_pred))
