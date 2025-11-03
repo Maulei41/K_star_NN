@@ -64,51 +64,27 @@ class KStarNN:
         if n == 0:
             return 0.0, 0
         
-        # Start with k=0 and incrementally increase
-        lambda_k = beta[0] + 1  # Initial lambda guess
-        k = 0
+        # Start with k=1 since we need at least one neighbor
+        k = 1
+        sum_beta = beta[0]
+        sum_beta_sq = beta[0]**2
+        discriminant = k + sum_beta**2 - k * sum_beta_sq
+        discriminant = max(0, discriminant)
+        sqrt_discriminant = np.sqrt(discriminant)
+        lambda_k = (sum_beta + sqrt_discriminant) / k
         
-        # Continue while condition is satisfied: lambda_k > beta[k+1] and k < n-1
-        while k < n - 1:
-            # Calculate lambda for k+1 neighbors
-            k_new = k + 1
-            sum_beta = np.sum(beta[:k_new])
-            sum_beta_sq = np.sum(beta[:k_new]**2)
-            
-            # Calculate discriminant for the quadratic equation
-            discriminant = k_new + sum_beta**2 - k_new * sum_beta_sq
-            
-            # Handle potential numerical issues
+        # While we can consider more neighbors and the condition is satisfied
+        while k < n and lambda_k > beta[k]:
+            k += 1
+            sum_beta = np.sum(beta[:k])
+            sum_beta_sq = np.sum(beta[:k]**2)
+            discriminant = k + sum_beta**2 - k * sum_beta_sq
             if discriminant < 0:
-                # The discriminant might be negative due to numerical precision issues
-                # If it's very close to 0, just set to 0, otherwise break
-                if discriminant < -1e-10:  # Significant negative value
+                if discriminant < -1e-10:
                     break
                 discriminant = 0.0
-            
-            # Calculate the new lambda value
             sqrt_discriminant = np.sqrt(discriminant)
-            new_lambda = (sum_beta + sqrt_discriminant) / k_new
-            
-            # Check if this new lambda satisfies the algorithm's condition
-            # We need new_lambda > beta[k_new] to include the next neighbor
-            if new_lambda > beta[k_new]:
-                # Accept this k and lambda
-                k = k_new
-                lambda_k = new_lambda
-            else:
-                # Stop here - the condition is not satisfied
-                break
-        
-        # Ensure k is at least 1 if possible
-        if k == 0 and n > 0:
-            k = 1
-            # For k=1 case
-            sum_beta = beta[0]
-            sum_beta_sq = beta[0]**2
-            discriminant = 1 + sum_beta**2 - 1 * sum_beta_sq
-            discriminant = max(0, discriminant)
-            lambda_k = (sum_beta + np.sqrt(discriminant)) / 1
+            lambda_k = (sum_beta + sqrt_discriminant) / k
         
         return lambda_k, k
     

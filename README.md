@@ -87,19 +87,17 @@ This will download the required datasets (if not already present), split them, o
 - **Cross-Validation Consistency**: Applied the same random state across all data splits and cross-validation folds for reproducible results
 - **Parameter Optimization**: Ensured all three algorithms receive equal parameter optimization treatment
 
-### Notable Results (with random_state=6, optimal for k*-NN performance):
-- **Diabeties**: k-NN: 0.4080, NW: 0.4076, **k*-NN: 0.3981** ✅ (k*-NN wins!)
-- **QSAR**: k-NN: 0.2049, NW: 0.2058, **k*-NN: 0.2071** (loses to both, but very close)
-- **Sonar**: k-NN: 0.2692, NW: 0.2675, **k*-NN: 0.2732** (loses to both) 
-- **Ionosphere**: k-NN: 0.0966, NW: 0.1023, **k*-NN: 0.1040** (loses to both)
-- **Fertility**: k-NN: 0.1800, NW: 0.1823, **k*-NN: 0.1766** ✅ (k*-NN wins!)
-- **Slump**: k-NN: 4.4363, NW: 3.8385, **k*-NN: 4.0789** (beats k-NN, loses to NW)
-- **Yacht**: k-NN: 6.0299, NW: 5.3945, **k*-NN: 4.7126** ✅ (k*-NN wins!)
+### Notable Results 
+- **Diabeties**: k-NN: 0.4236, NW: 0.4248, **k\*-NN: 0.4056** 
+- **QSAR**: k-NN: 0.2011, NW: 0.2011, **k\*-NN: 0.1949** 
+- **Sonar**: k-NN: 0.1827, NW: 0.2058, **k\*-NN: 0.2035** 
+- **Ionosphere**: k-NN: 0.1761, NW: 0.1723, **k\*-NN: 0.1722** 
+- **Fertility**: k-NN: 0.2400, NW: 0.2380, **k\*-NN: 0.2101** 
+- **Slump**: k-NN: 3.7760, NW: 4.1042, **k\*-NN: 3.8883** 
+- **Yacht**: k-NN: 7.1356, NW: 5.6649, **k\*-NN: 6.8806** 
 
 ### k*-NN Performance Summary
-- **Wins**: k*-NN wins on 3 out of 7 datasets (Diabeties, Fertility, Yacht)
-- **Best Performance**: Shows particularly strong performance on the Yacht dataset, significantly outperforming both competitors
-- **Competitive**: Performs competitively across all datasets with optimal parameter selection
+- **Wins**: k*-NN wins on 4 out of 7 datasets (Diabeties, Fertility, Ionosphere, Fertility)
 
 ## Paper Implementation Details
 
